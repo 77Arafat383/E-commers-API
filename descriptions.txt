@@ -1,0 +1,259 @@
+Complex API with relationships.
+
+Express + MongoDB + JWT + bcrypt
+
+models: 
+   user->normal users + admins
+   product-> items available for purchase
+   Order-> linked to a user, contains products.
+
+Features:
+   Admin can add/ update products
+   User can place orders->stock decreases automatically
+   Orders are linked to users (each user sees their own orders).
+
+
+
+Routes of API.. 
+***Auth***
+
+Registration: 
+    Post->http://localhost:5000/api/auth/register/
+    body:
+      {
+         "username": "xyz",
+         "password": "xyz",
+         "email": "xyz@gmail.com",
+         "address": "xyz",
+         "phone": "01*********",
+         "role": "admin"--->user default.
+      }
+
+
+Login:
+    Post->http://localhost:5000/api/auth/login/
+    body:{
+         "username": "xyz",
+         "password": "xyz",
+         "email": "xyz@gmail.com",
+
+         -->username or email
+    }
+
+
+Get User Profile:
+    after login
+    GET->http://localhost:5000/api/auth/profile/
+    Header- Authorization: Bearer <token>
+    
+
+Update User Profile:
+    after login
+    PUT->http://localhost:5000/api/auth/profile/
+    Header- Authorization: Bearer <token>
+
+Delete User Profile:
+    after login
+    DELETE -> http://localhost:5000/api/auth/delete/
+    Header- Authorization: Bearer <token>
+
+
+
+***Products***
+
+1. Create a new product (admin only):
+    after login from admin
+    POST -> http://localhost:5000/api/products/
+    Header- Authorization: Bearer <token>
+    body ->
+    {
+        "name":"abcd",
+        "description":"xxxxxxxxxxxxxx",
+        "price": "23434",
+        "stock" : "10",
+        "category": "cloth",
+        "imageUrl": "valid image url",
+        "discount":"0"
+
+    }
+
+
+2. Get all products:
+   after login
+   GET http://localhost:5000/api/products
+    Header- Authorization: Bearer <token>
+
+
+3. Search products by name
+  after login
+  GET http://localhost:5000/api/products?search=laptop
+  Header- Authorization: Bearer <token>
+
+4. Filter by price range:
+  after login
+  GET http://localhost:5000/api/products?minPrice=100&maxPrice=500
+  Header- Authorization: Bearer <token>
+
+5. Filter by category:
+  after login
+  GET http://localhost:5000/api/products?category=Electronics
+  Header- Authorization: Bearer <token>
+
+6. Get top-rated products:
+   after login
+   GET http://localhost:5000/api/products?topRated=true
+  Header- Authorization: Bearer <token>
+
+
+7. Get discounted products:
+     after login
+   GET http://localhost:5000/api/products?discounted=true
+   Header- Authorization: Bearer <token>
+
+8. Sort by price (low to high):
+   GET http://localhost:5000/api/products?sortBy=price&sortOrder=asc
+   Header- Authorization: Bearer <token>
+
+9. Complex filtering - Electronics laptops under $300:
+   GET http://localhost:5000/api/products?search=laptop&category=Electronics&maxPrice=300
+   Header- Authorization: Bearer <token>
+
+
+10. Pagination - Get page 2 with 5 products per page:
+   GET http://localhost:5000/api/products?page=2&limit=5
+   Header- Authorization: Bearer <token>
+
+11. Get a single product by ID
+   after login
+   GET -> http://localhost:5000/api/products/:id
+   Header- Authorization: Bearer <token>
+
+
+12. Update a product by ID (admin only):
+   after login from admin
+   PUT -> http://localhost:5000/api/products/:id
+   Header- Authorization: Bearer <token>
+   body ->
+    {
+        "name":"abcd",
+        "descriptions":"xxxxxxxxxxxxxx",
+        "price": "23434",
+        "stock" : "10",
+        "category": "cloth",
+        "imageUrl": "",
+        "discount":"0"
+        //any of these
+
+    }
+
+
+13. Delete a product by ID (admin only):
+   after login from admin
+   DELETE -> http://localhost:5000//api/products/:id
+   Header- Authorization: Bearer <token>
+
+
+14. Rate and Review a Product:
+    after login
+    POST http://localhost:5000/api/products/PRODUCT_ID/review
+    Header- Authorization: Bearer <token>
+    body: 
+    {
+     "rating": 4.5,
+     "comment": "This product is amazing! Great quality and fast delivery. Highly recommended for anyone looking for quality items.",
+     "name": "John Doe"
+   }
+
+15. Get all reviews for a product:
+    after login
+    GET http://localhost:5000/api/products/PRODUCT_ID/reviews
+    Header- Authorization: Bearer <token>
+
+
+12. Update product stock (admin only):
+   after login from admin
+   PUT  http://localhost:5000/api/products/:id/stock
+   Header- Authorization: Bearer <token>
+
+
+
+
+
+***Order***
+
+1. Create a new order (authenticated users):
+      after login
+      POST http://localhost:5000/api/orders
+      Header- Authorization: Bearer <token>
+      body-   
+      {
+      "products": [
+        { "product": "<productId1>", "quantity": 2 },
+        { "product": "<productId2>", "quantity": 1 }
+      ],
+      "shippingAddress": "123 Street, City",
+      "paymentMethod": "Bkash"
+      }
+
+
+2. Get all orders for the logged-in user
+   after login
+   GET http://localhost:5000/api/orders/my-orders
+   Header- Authorization: Bearer <token>
+
+
+3. Get a single order by ID (authenticated users)
+   after login
+   GET http://localhost:5000/api/orders/:id
+
+4. Update order status (admin only)
+   PUT http://localhost:5000/api/orders/:id/status (admin)
+   Headers: Authorization: Bearer <admin token>
+   Body: { "status": "shipped", "paymentStatus": "completed" } (both optional; send what you’re changing)
+
+5. Delete an order (admin only)
+   DELETE http://localhost:5000/api/orders/:id 
+   Headers: Authorization: Bearer <admin token>
+
+
+
+******Complete Workflow Example*****
+
+Step 1: User Requests Deletion
+POST /api/orders/64f8a1b2c3d4e5f6a7b8c9d0/request-deletion
+{
+  "reason": "I changed my mind and don't want this order anymore."
+}
+
+
+Step 2: Admin Reviews Requests
+GET /api/orders/admin/deletion-requests
+
+
+Step 3: Admin Approves/Rejects
+PUT /api/orders/64f8a1b2c3d4e5f6a7b8c9d0/review-deletion
+{
+  "action": "approve",
+  "adminNotes": "Customer request approved."
+}
+
+
+Restrictions:
+Cannot delete delivered orders
+Cannot request deletion twice
+Minimum 10 characters for reason
+💡 Benefits:
+User Control: Users can request order cancellation
+Admin Oversight: Admins have final say
+Stock Safety: Automatic stock restoration
+Audit Trail: Complete request history
+Flexible: Works for both cancellation and deletion
+
+
+
+
+
+
+
+    
+
